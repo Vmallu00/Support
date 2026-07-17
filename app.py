@@ -35,7 +35,7 @@ def get_pterodactyl_status():
 def get_system_stats():
     cpu_percent = psutil.cpu_percent(interval=1)
     cpu_count = psutil.cpu_count()
-    load_avg = psutil.getloadavg() if hasattr(psutil, 'getloadavg') else [0, 0, 0]
+    load_avg = psutil.getloadavg() if hasattr(psutil, 'getloadavg') else [0,0,0]
     mem = psutil.virtual_memory()
     disk = psutil.disk_usage('/')
     boot_time = psutil.boot_time()
@@ -158,10 +158,6 @@ def vm_stop():
 @app.route('/api/vm/create')
 def vm_create():
     return jsonify(run_vm_command('create'))
-
-@app.route('/api/vm/console')
-def vm_console():
-    return jsonify(run_vm_command('console'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
