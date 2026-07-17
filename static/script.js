@@ -1,11 +1,9 @@
-// ---------- TAB SWITCHING ----------
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById(btn.dataset.tab + '-tab').classList.add('active');
-
         if (btn.dataset.tab === 'terminal' && terminal) {
             setTimeout(() => {
                 fitAddon.fit();
@@ -15,11 +13,9 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     });
 });
 
-// ---------- STATS POLLING ----------
 function formatBytes(bytes) {
     return (bytes / 1024 / 1024 / 1024).toFixed(1) + ' GB';
 }
-
 function formatUptime(seconds) {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -30,23 +26,18 @@ async function fetchStats() {
     try {
         const res = await fetch('/api/stats');
         const data = await res.json();
-
         document.getElementById('cpuValue').textContent = data.cpu.percent + '%';
         document.getElementById('cpuBar').style.width = data.cpu.percent + '%';
         document.getElementById('loadAvg').textContent = data.cpu.load_avg.map(v => v.toFixed(2)).join(' ');
-
         document.getElementById('ramValue').textContent = data.ram.percent + '%';
         document.getElementById('ramBar').style.width = data.ram.percent + '%';
         document.getElementById('ramUsed').textContent = formatBytes(data.ram.used);
         document.getElementById('ramTotal').textContent = formatBytes(data.ram.total);
-
         document.getElementById('diskValue').textContent = data.disk.percent + '%';
         document.getElementById('diskBar').style.width = data.disk.percent + '%';
         document.getElementById('diskUsed').textContent = formatBytes(data.disk.used);
         document.getElementById('diskTotal').textContent = formatBytes(data.disk.total);
-
         document.getElementById('uptimeValue').textContent = formatUptime(data.uptime);
-
         const wings = document.getElementById('pteroWings');
         const panel = document.getElementById('pteroPanel');
         if (data.pterodactyl.wings) {
@@ -67,11 +58,10 @@ async function fetchStats() {
         console.error('Stats fetch error', e);
     }
 }
-
 fetchStats();
 setInterval(fetchStats, 2000);
 
-// ---------- WEB TERMINAL ----------
+// Terminal
 const termContainer = document.getElementById('terminal-container');
 const terminal = new Terminal({
     cursorBlink: true,
@@ -97,45 +87,28 @@ fitAddon.fit();
 const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const wsUrl = `${protocol}//${window.location.host}/terminal`;
 const socket = new WebSocket(wsUrl);
-
 socket.onopen = () => {
-    terminal.write('\r\n\x1b[1;32m▶ CONNECTED TO VM CONSOLE\x1b[0m\r\n');
+    terminal.write('\r\n\x1b[1;32m▶ CONNECTED TO CONSOLE\x1b[0m\r\n');
     terminal.write('\x1b[1;33m$ \x1b[0m');
-    const dims = { cols: terminal.cols, rows: terminal.rows };
-    socket.send(JSON.stringify({ type: 'resize', cols: dims.cols, rows: dims.rows }));
+    socket.send(JSON.stringify({ type: 'resize', cols: terminal.cols, rows: terminal.rows }));
 };
-
-socket.onmessage = (event) => {
-    terminal.write(event.data);
-};
-
-socket.onclose = () => {
-    terminal.write('\r\n\x1b[1;31m⚠️ CONNECTION LOST. RELOAD PAGE TO RECONNECT.\x1b[0m\r\n');
-};
-
+socket.onmessage = (event) => { terminal.write(event.data); };
+socket.onclose = () => { terminal.write('\r\n\x1b[1;31m⚠️ CONNECTION LOST. RELOAD.\x1b[0m\r\n'); };
 terminal.onData((data) => {
-    if (socket.readyState === WebSocket.OPEN) {
-        socket.send(data);
-    }
+    if (socket.readyState === WebSocket.OPEN) socket.send(data);
 });
-
 window.addEventListener('resize', () => {
     fitAddon.fit();
-    if (socket.readyState === WebSocket.OPEN) {
-        const dims = { cols: terminal.cols, rows: terminal.rows };
-        socket.send(JSON.stringify({ type: 'resize', cols: dims.cols, rows: dims.rows }));
-    }
+    if (socket.readyState === WebSocket.OPEN)
+        socket.send(JSON.stringify({ type: 'resize', cols: terminal.cols, rows: terminal.rows }));
 });
-
-// Resize on tab switch
 const observer = new MutationObserver(() => {
-    if (document.getElementById('terminal-tab').classList.contains('active')) {
-        setTimeout(() => { fitAddon.fit(); }, 50);
-    }
+    if (document.getElementById('terminal-tab').classList.contains('active'))
+        setTimeout(() => fitAddon.fit(), 50);
 });
 observer.observe(document.getElementById('terminal-tab'), { attributes: true, attributeFilter: ['class'] });
 
-// ---------- VM CONTROL ----------
+// VM Control
 const vmStatusBadge = document.getElementById('vmStatusBadge');
 const vmDetails = document.getElementById('vmDetails');
 const vmActionOutput = document.getElementById('vmActionOutput');
@@ -150,7 +123,6 @@ async function fetchVMStatus() {
         const data = await res.json();
         const status = data.status || 'unknown';
         const details = data.details || '';
-
         if (status === 'running') {
             vmStatusBadge.textContent = '🟢 RUNNING';
             vmStatusBadge.style.color = '#50fa7b';
@@ -163,19 +135,16 @@ async function fetchVMStatus() {
         }
         vmDetails.textContent = details.trim().split('\n')[0] || '';
     } catch (e) {
-        console.error('VM status error', e);
         vmStatusBadge.textContent = '❌ ERROR';
         vmStatusBadge.style.color = '#ff5555';
     }
 }
-
 async function vmAction(action, button) {
-    const originalText = button.textContent;
+    const original = button.textContent;
     button.textContent = '⏳ ...';
     button.disabled = true;
     vmActionOutput.style.display = 'block';
     vmActionOutput.textContent = '⏳ Executing...';
-
     try {
         const res = await fetch(`/api/vm/${action}`);
         const data = await res.json();
@@ -190,16 +159,13 @@ async function vmAction(action, button) {
         vmActionOutput.style.color = '#ff5555';
         vmActionOutput.textContent = `❌ Request failed: ${e.message}`;
     }
-
-    button.textContent = originalText;
+    button.textContent = original;
     button.disabled = false;
     setTimeout(fetchVMStatus, 2000);
 }
-
 vmStartBtn.addEventListener('click', () => vmAction('start', vmStartBtn));
 vmStopBtn.addEventListener('click', () => vmAction('stop', vmStopBtn));
 vmCreateBtn.addEventListener('click', () => vmAction('create', vmCreateBtn));
 vmRefreshBtn.addEventListener('click', fetchVMStatus);
-
 fetchVMStatus();
 setInterval(fetchVMStatus, 10000);
