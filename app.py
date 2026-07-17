@@ -17,10 +17,7 @@ sock = Sock(app)
 
 # ---------- PTERODACTYL DETECTION ----------
 def get_pterodactyl_status():
-    status = {
-        'wings': False,
-        'panel': False
-    }
+    status = {'wings': False, 'panel': False}
     for proc in psutil.process_iter(['name', 'cmdline']):
         try:
             cmdline = ' '.join(proc.info['cmdline'] or [])
@@ -39,36 +36,20 @@ def get_system_stats():
     cpu_percent = psutil.cpu_percent(interval=1)
     cpu_count = psutil.cpu_count()
     load_avg = psutil.getloadavg() if hasattr(psutil, 'getloadavg') else [0, 0, 0]
-    
     mem = psutil.virtual_memory()
     disk = psutil.disk_usage('/')
-    
     boot_time = psutil.boot_time()
     uptime_seconds = int(time.time() - boot_time)
-    
     return {
         'timestamp': datetime.utcnow().isoformat(),
         'status': 'online',
-        'cpu': {
-            'percent': cpu_percent,
-            'cores': cpu_count,
-            'load_avg': load_avg
-        },
-        'ram': {
-            'total': mem.total,
-            'used': mem.used,
-            'percent': mem.percent
-        },
-        'disk': {
-            'total': disk.total,
-            'used': disk.used,
-            'percent': disk.percent
-        },
+        'cpu': {'percent': cpu_percent, 'cores': cpu_count, 'load_avg': load_avg},
+        'ram': {'total': mem.total, 'used': mem.used, 'percent': mem.percent},
+        'disk': {'total': disk.total, 'used': disk.used, 'percent': disk.percent},
         'uptime': uptime_seconds,
         'pterodactyl': get_pterodactyl_status()
     }
 
-# ---------- ROUTES ----------
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -77,15 +58,14 @@ def index():
 def stats():
     return jsonify(get_system_stats())
 
-# ---------- WEBSOCKET TERMINAL (FIXED) ----------
+# ---------- WEBSOCKET TERMINAL (FIXED - sets TERM) ----------
 @sock.route('/terminal')
 def handle_terminal(ws):
-    # Create pseudo-terminal
     master_fd, slave_fd = pty.openpty()
     
-    # Set the TERM environment variable to a common terminal type
+    # ✅ FIX: Explicitly set TERM environment variable
     env = os.environ.copy()
-    env['TERM'] = 'xterm-256color'   # This is the key fix
+    env['TERM'] = 'xterm-256color'
 
     process = subprocess.Popen(
         ['/bin/bash'],
@@ -94,11 +74,10 @@ def handle_terminal(ws):
         stderr=slave_fd,
         text=False,
         preexec_fn=os.setsid,
-        env=env   # Pass the modified environment
+        env=env   # ✅ Pass the fixed environment
     )
     os.close(slave_fd)
     
-    # Thread to read output
     def reader():
         try:
             while process.poll() is None:
@@ -118,7 +97,6 @@ def handle_terminal(ws):
             message = ws.receive()
             if message is None:
                 break
-            # Handle resize
             try:
                 payload = json.loads(message)
                 if payload.get('type') == 'resize':
@@ -129,7 +107,6 @@ def handle_terminal(ws):
                     continue
             except json.JSONDecodeError:
                 pass
-            # Send keystrokes
             os.write(master_fd, message.encode())
     finally:
         process.terminate()
