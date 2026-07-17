@@ -24,13 +24,10 @@ def get_pterodactyl_status():
     for proc in psutil.process_iter(['name', 'cmdline']):
         try:
             cmdline = ' '.join(proc.info['cmdline'] or [])
-            # Wings daemon
             if 'wings' in cmdline or proc.info['name'] == 'wings':
                 status['wings'] = True
-            # Panel queue worker (Laravel artisan)
             if 'php' in cmdline and 'artisan' in cmdline and 'queue:work' in cmdline:
                 status['panel'] = True
-            # Panel web server (nginx serving panel)
             if 'nginx' in cmdline and '/var/www/panel' in cmdline:
                 status['panel'] = True
         except (psutil.NoSuchProcess, psutil.AccessDenied):
@@ -80,18 +77,24 @@ def index():
 def stats():
     return jsonify(get_system_stats())
 
-# ---------- WEBSOCKET TERMINAL ----------
+# ---------- WEBSOCKET TERMINAL (FIXED) ----------
 @sock.route('/terminal')
 def handle_terminal(ws):
     # Create pseudo-terminal
     master_fd, slave_fd = pty.openpty()
+    
+    # Set the TERM environment variable to a common terminal type
+    env = os.environ.copy()
+    env['TERM'] = 'xterm-256color'   # This is the key fix
+
     process = subprocess.Popen(
         ['/bin/bash'],
         stdin=slave_fd,
         stdout=slave_fd,
         stderr=slave_fd,
         text=False,
-        preexec_fn=os.setsid
+        preexec_fn=os.setsid,
+        env=env   # Pass the modified environment
     )
     os.close(slave_fd)
     
