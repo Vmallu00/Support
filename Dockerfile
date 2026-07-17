@@ -16,8 +16,8 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Ensure the vm-manager.sh is executable and in PATH
-COPY scripts/vm-manager.sh /usr/local/bin/vm-manager.sh
+# Copy the VM manager script from the root (not from scripts/)
+COPY vm-manager.sh /usr/local/bin/vm-manager.sh
 RUN chmod +x /usr/local/bin/vm-manager.sh
 
 # Create data directory for VM storage
