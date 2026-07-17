@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ Railway VM Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" />
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚡ RAILWAY VM DASHBOARD</h1>
+            <div class="status-badge" id="statusBadge">🟢 ONLINE</div>
+        </header>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="stats">📊 STATS</button>
+            <button class="tab-btn" data-tab="terminal">🖥️ CONSOLE</button>
+        </div>
+
+        <!-- Stats Tab -->
+        <div id="stats-tab" class="tab-content active">
+            <div class="stats-grid">
+                <!-- CPU -->
+                <div class="stat-card">
+                    <div class="stat-label">CPU</div>
+                    <div class="stat-value" id="cpuValue">0%</div>
+                    <div class="progress-bar"><div class="progress-fill" id="cpuBar"></div></div>
+                    <div class="stat-sub">Load: <span id="loadAvg">0.00</span></div>
+                </div>
+                <!-- RAM -->
+                <div class="stat-card">
+                    <div class="stat-label">RAM</div>
+                    <div class="stat-value" id="ramValue">0%</div>
+                    <div class="progress-bar"><div class="progress-fill" id="ramBar"></div></div>
+                    <div class="stat-sub">Used: <span id="ramUsed">0 GB</span> / <span id="ramTotal">0 GB</span></div>
+                </div>
+                <!-- DISK -->
+                <div class="stat-card">
+                    <div class="stat-label">DISK</div>
+                    <div class="stat-value" id="diskValue">0%</div>
+                    <div class="progress-bar"><div class="progress-fill" id="diskBar"></div></div>
+                    <div class="stat-sub">Used: <span id="diskUsed">0 GB</span> / <span id="diskTotal">0 GB</span></div>
+                </div>
+                <!-- UPTIME -->
+                <div class="stat-card full-width">
+                    <div class="stat-label">UPTIME</div>
+                    <div class="stat-value" id="uptimeValue">0h 0m</div>
+                </div>
+                <!-- PTERODACTYL STATUS -->
+                <div class="stat-card full-width">
+                    <div class="stat-label">🦕 PTERODACTYL SERVICES</div>
+                    <div style="display: flex; gap: 30px; margin-top: 10px;">
+                        <div>
+                            <span style="color: #8ab4f8;">Wings (Daemon):</span>
+                            <span id="pteroWings" style="font-weight: bold; color: #ff5555;">⏳ Checking...</span>
+                        </div>
+                        <div>
+                            <span style="color: #8ab4f8;">Panel (Web):</span>
+                            <span id="pteroPanel" style="font-weight: bold; color: #ff5555;">⏳ Checking...</span>
+                        </div>
+                    </div>
+                    <div class="stat-sub" style="margin-top: 12px; color: #f1fa8c;">
+                        ⚠️ Manual install only. Use Railway Volumes for persistent game storage!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terminal Tab -->
+        <div id="terminal-tab" class="tab-content">
+            <div id="terminal-container"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit/lib/xterm-addon-fit.js"></script>
+    <script src="/static/script.js"></script>
+</body>
+  </html>
